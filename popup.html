@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="popup.css" />
+    <title>TruthLens</title>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="mark">✓</div>
+        <div><h1>TruthLens</h1><p>News context, not a verdict.</p></div>
+      </header>
+      <label class="privacy-switch" for="enabled-toggle">
+        <span><strong>Page reading</strong><small>Only analyze pages when turned on</small></span>
+        <input id="enabled-toggle" type="checkbox" role="switch" aria-label="Turn page reading on or off" />
+        <i aria-hidden="true"></i>
+      </label>
+      <section id="loading" class="loading">Reading this page…</section>
+      <section id="privacy-off" class="privacy-off" hidden>
+        <h2>Page reading is off</h2>
+        <p>TruthLens is not reading any page content. Turn it on above to analyze only the page currently open.</p>
+      </section>
+      <section id="result" hidden>
+        <p class="eyebrow">TRUTHLENS RESULT</p>
+        <div id="verdict" class="verdict">Checking…</div>
+        <p id="rating" class="rating"></p>
+        <div class="source-row"><div><strong id="publisher">Publisher</strong><span id="domain"></span></div><div class="score" id="score">—</div></div>
+        <button id="why-button" class="why-button" type="button" aria-expanded="false">Why?</button>
+        <div id="why-panel" class="article-card" hidden>
+          <p class="eyebrow">CLUES WE FOUND</p>
+          <h2 id="headline">This page</h2>
+          <div id="post-preview" class="post-preview" hidden>
+            <p class="eyebrow">VISIBLE POST TEXT</p>
+            <p id="post-text"></p>
+            <div id="captions-preview" hidden>
+              <p class="eyebrow">AVAILABLE SUBTITLES</p>
+              <p id="caption-text"></p>
+            </div>
+            <div id="post-links" class="post-links"></div>
+          </div>
+          <ul id="signals"></ul>
+        </div>
+        <p class="note">This is a credibility check, not a fact-check. Compare important claims with primary sources and independent reporting.</p>
+      </section>
+      <section id="error" hidden>
+        <h2>Couldn’t read this page</h2><p>Open a news article, then try again.</p>
+      </section>
+    </main>
+    <script src="source-registry.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>
