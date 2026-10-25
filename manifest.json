@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "TruthLens",
+  "version": "1.0.0",
+  "description": "Helps you evaluate news sources and article transparency.",
+  "permissions": ["activeTab", "storage", "tabs"],
+  "action": {
+    "default_title": "Analyze this article",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
