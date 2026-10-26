@@ -61,7 +61,7 @@ function plainOpinionClaim(title, lead) {
   if (!title || !lead) return '';
   const topic = title.split(/\s+(?:and|&|:|–|—)\s+/i)[0].trim();
   if (topic.length < 4 || topic.length > 100) return '';
-  if (/\b(dishonest|bad idea|wrong|harmful|dangerous|fail(?:s|ed|ure)?|criticiz|oppose|against)\b/i.test(lead)) {
+  if (/\b(dishonest(?:y)?|bad idea|wrong|harmful|dangerous|fail(?:s|ed|ure)?|criticiz|oppose|against)\b/i.test(lead)) {
     return `This opinion article argues against ${topic}.`;
   }
   if (/\b(good idea|benefit|helps?|supports?|success|effective|works?|in favor of)\b/i.test(lead)) {
