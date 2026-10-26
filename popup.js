@@ -51,49 +51,31 @@ function safetyCheck(data) {
   if (/\b(urgent|immediately|share this|breaking|emergency|disaster|evacuate)\b/.test(text)) categories.push('urgent claim');
   return [...new Set(categories)];
 }
-async function copyClaimToClipboard(claim) {
-  try {
-    await navigator.clipboard.writeText(claim);
-    return true;
-  } catch {
-    const fallback = document.createElement('textarea');
-    fallback.value = claim;
-    fallback.setAttribute('readonly', '');
-    fallback.style.cssText = 'position:fixed;left:-9999px;top:-9999px;';
-    document.body.append(fallback);
-    fallback.select();
-    const copied = document.execCommand('copy');
-    fallback.remove();
-    return copied;
-  }
-}
 function render(data) {
   const source = sourceForHostname(data.hostname);
   const estimate = source ? null : estimateUnknownSource(data);
   const score = source?.score ?? (data.social ? 30 : estimate.score);
   const notNews = data.isYouTube && looksLikeNonNews(data);
-  const credible = Boolean(source?.kind === 'newsroom' && score >= 70 && !data.social);
+  const credible = !data.social && (source ? source.kind === 'newsroom' && score >= 70 : score >= 65);
   const claim = extractMainClaim(data);
   const risks = safetyCheck(data);
   document.querySelector('#publisher').textContent = source?.name ?? (data.social ? 'Social-media post' : 'Unlisted publisher');
   document.querySelector('#domain').textContent = data.hostname;
   document.querySelector('#score').textContent = source ? `${score}/100` : data.social ? 'Check' : `~${score}/100`;
   const verdict = document.querySelector('#verdict');
-  verdict.textContent = notNews ? 'Not news content' : risks.length ? 'High-stakes: verify' : credible ? 'Looks credible' : source ? 'Limited confidence' : score >= 65 ? 'Promising signals' : score >= 45 ? 'Limited confidence' : 'Little evidence found';
+  verdict.textContent = notNews ? 'Not news' : credible ? 'Credible' : 'Not credible';
   verdict.classList.toggle('cautious', !credible);
   document.querySelector('#rating').textContent = notNews ? 'This video appears to be entertainment, a tutorial, or another non-news format. That is not a judgment about its quality or accuracy.' : credible ? `${source.tier}. ${source.note}` : (data.social ? 'Social posts are not independently fact-checked by TruthLens. Look for the original source before sharing.' : source ? `${source.tier}. ${source.note}` : `Provisional ${score}/100 estimate based on visible transparency signals. It is not a fact-check or an endorsement of the publisher.`);
   document.querySelector('#headline').textContent = data.title || 'This page';
-  const safetyCard = document.querySelector('#safety-card');
-  safetyCard.hidden = false;
-  document.querySelector('#main-claim').textContent = `Main claim: ${claim}`;
-  document.querySelector('#safety-message').textContent = risks.length
-    ? `This may involve ${risks.join(', ')}. Pause before sharing or acting; copy the claim and check primary and independent sources.`
-    : 'Copy the claim, then paste it into a search engine, fact-checking site, or message to a trusted person before sharing.';
-  document.querySelector('#research-button').onclick = async (event) => {
-    const copied = await copyClaimToClipboard(claim);
-    event.currentTarget.textContent = copied ? 'Copied — paste it to research' : 'Could not copy — select the claim above';
-    setTimeout(() => { event.currentTarget.textContent = 'Copy claim to clipboard'; }, 2600);
-  };
+  const claimsStrip = document.querySelector('#claims-strip');
+  claimsStrip.hidden = false;
+  document.querySelector('#main-claim').textContent = claim;
+  document.querySelector('#claim-status').textContent = data.externalLinks >= 2
+    ? 'Verification: source links found — compare them with independent reporting.'
+    : 'Verification: no clear independent evidence found on this page.';
+  const safetyMessage = document.querySelector('#safety-message');
+  safetyMessage.hidden = !risks.length;
+  safetyMessage.textContent = risks.length ? `Safety: ${risks.join(', ')} claim — verify before acting or sharing.` : '';
   const preview = document.querySelector('#post-preview');
   preview.hidden = !data.social;
   if (data.social) {
