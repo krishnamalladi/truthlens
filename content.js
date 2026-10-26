@@ -46,6 +46,10 @@
     }))].slice(0, 5);
     const allLinks = [...document.querySelectorAll('a[href]')];
     const transparencyLinks = allLinks.filter(link => /\b(about|contact|editorial|standards|corrections?|ethics|privacy|masthead|ownership)\b/i.test(`${link.textContent} ${link.href}`)).length;
+    const forms = [...document.forms];
+    const hasPasswordField = forms.some(form => form.querySelector('input[type="password"]'));
+    const hasPaymentField = forms.some(form => form.querySelector('input[autocomplete*="cc-"], input[name*="card" i], input[name*="payment" i]'));
+    const externalForm = forms.some(form => { try { return form.action && new URL(form.action).hostname !== location.hostname; } catch { return false; } });
     const aiPattern = /\b(ai[- ]generated|generated with ai|synthetic media|synthetic image|digitally altered|ai image|ai video)\b/i;
     const aiSources = [...document.querySelectorAll('meta[content], img[alt], figure, figcaption, video[aria-label]')]
       .map(element => element.content || element.alt || element.getAttribute('aria-label') || element.textContent || '')
@@ -54,7 +58,7 @@
     const aiDisclosure = [...new Set(aiSources)].slice(0, 2);
     const author = document.querySelector('meta[name="author"], meta[property="article:author"], [rel="author"], .byline, [class*="byline"]')?.content || document.querySelector('[rel="author"], .byline, [class*="byline"]')?.textContent?.trim() || '';
     const date = document.querySelector('meta[property="article:published_time"], meta[name="date"], time[datetime]')?.content || document.querySelector('time[datetime]')?.dateTime || '';
-    return { title: title.trim(), text, captions, isYouTube, author, date, transparencyLinks, aiDisclosure, externalLinks: outboundUrls.length, outboundUrls, url: location.href, hostname: location.hostname, social };
+    return { title: title.trim(), text, captions, isYouTube, author, date, transparencyLinks, aiDisclosure, hasPasswordField, hasPaymentField, externalForm, protocol: location.protocol, externalLinks: outboundUrls.length, outboundUrls, url: location.href, hostname: location.hostname, social };
   }
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message.type === 'GET_ARTICLE_DATA') {
