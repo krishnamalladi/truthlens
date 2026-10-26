@@ -31,11 +31,11 @@
     const isYouTube = /(^|\.)youtube\.com$/.test(location.hostname);
     const youtubeTitle = document.querySelector('ytd-watch-metadata h1 yt-formatted-string, ytd-reel-player-overlay-renderer h2, #title h1');
     const youtubeDescription = document.querySelector('#description-inline-expander, ytd-text-inline-expander#description, ytd-reel-player-overlay-renderer #description');
-    const title = youtubeTitle?.innerText || document.querySelector('meta[property="og:title"]')?.content || document.querySelector('h1')?.innerText || document.title;
     const post = isYouTube
       ? (youtubeDescription || youtubeTitle || document.querySelector('ytd-watch-metadata, ytd-reel-player-overlay-renderer'))
       : social && document.querySelector('[data-testid="tweetText"], [data-ad-preview="message"], [role="article"], [data-e2e="browse-video-desc"], [data-e2e="video-desc"]');
     const article = post || document.querySelector('article') || document.querySelector('[role="main"]') || document.body;
+    const title = youtubeTitle?.innerText || document.querySelector('meta[property="og:title"]')?.content || document.querySelector('meta[name="twitter:title"]')?.content || article.querySelector('h1')?.innerText || document.querySelector('h1')?.innerText || document.title;
     const youtubeText = [youtubeTitle?.innerText, youtubeDescription?.innerText].filter(Boolean).join('\n\n');
     const text = (youtubeText || article?.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 30000);
     const captions = isYouTube ? getCaptionText(document.querySelector('video')) : '';
