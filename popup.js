@@ -14,10 +14,10 @@ function makeSignals(data) {
   if (data.social) signals.push('This is a social-media page. Posts can spread before independent verification.');
   if (data.isYouTube && data.captions) signals.push('Available subtitles were read locally as additional context.');
   if (data.isYouTube && !data.captions) signals.push('No readable subtitles are available yet. The title and description were checked instead.');
-  if (data.externalLinks >= 3) signals.push('Includes links to outside sources or evidence.'); else signals.push('Few visible links to outside sources—look for original evidence.');
+  if (data.externalLinks >= 3) signals.push('Includes links to outside sources or evidence.'); else signals.push('Few visible links to outside sources. Look for original evidence.');
   if (/\b(according to|data from|report|study|documents?)\b/.test(text)) signals.push('References reporting, documents, data, or attributed sources.');
   else signals.push('Limited source-attribution language was detected.');
-  if (/\b(opinion|editorial|commentary|analysis)\b/.test(text)) signals.push('May include analysis or opinion—separate it from reported facts.');
+  if (/\b(opinion|editorial|commentary|analysis)\b/.test(text)) signals.push('May include analysis or opinion. Separate it from reported facts.');
   if (/\b(correction|updated|update:)\b/.test(text)) signals.push('An update or correction notice appears on the page.');
   return signals;
 }
@@ -42,10 +42,16 @@ function estimateUnknownSource(data) {
   return { score: Math.min(score, 85), clues };
 }
 function extractMainClaim(data) {
+  try {
+    if (new URL(data.url).pathname === '/') return 'Open a specific article to check its main claim.';
+  } catch { /* Keep the normal headline check when a page URL is unavailable. */ }
   const title = (data.title || '').replace(/\s+/g, ' ').replace(/\s*[|–—]\s*[^|–—]+$/, '').trim();
   const looksLikePageChrome = /\b(gift unlocked|listen \(|article\b|subscribe|sign in|minutes? read|\b\d{1,2}:\d{2}\s*(am|pm)\b)\b/i.test(title);
   if (title.length >= 12 && title.length <= 180 && !looksLikePageChrome) return title;
   return 'No clear headline found on this page.';
+}
+function isHomePage(data) {
+  try { return new URL(data.url).pathname === '/'; } catch { return false; }
 }
 function safetyCheck(data) {
   const text = `${data.title} ${data.text} ${data.captions || ''}`.toLowerCase();
@@ -92,6 +98,7 @@ function render(data) {
   const notNews = data.isYouTube && looksLikeNonNews(data);
   const credible = !data.social && (source ? isEstablishedNewsroom(source) : score >= 65);
   const claim = extractMainClaim(data);
+  const homePage = isHomePage(data);
   const risks = safetyCheck(data);
   const scamFlags = scamCheck(data, source);
   document.querySelector('#publisher').textContent = source?.name ?? (data.social ? 'Social-media post' : 'Unlisted publisher');
@@ -106,12 +113,16 @@ function render(data) {
   const claimsStrip = document.querySelector('#claims-strip');
   claimsStrip.hidden = false;
   document.querySelector('#main-claim').textContent = claim;
-  document.querySelector('#claim-status').textContent = data.externalLinks >= 2
-    ? 'Verification: source links found — compare them with independent reporting.'
-    : 'Verification: no clear independent evidence found on this page.';
-  document.querySelector('#ai-status').textContent = data.aiDisclosure?.length
-    ? `AI check: disclosure found — ${data.aiDisclosure[0].slice(0, 120)}`
-    : 'AI check: no disclosure found — this does not prove the media is human-made.';
+  const claimStatus = document.querySelector('#claim-status');
+  claimStatus.hidden = homePage;
+  claimStatus.textContent = data.externalLinks >= 2
+    ? 'We found links to other sources. You can review them under Why.'
+    : 'We did not find clear links to other sources on this page.';
+  const aiStatus = document.querySelector('#ai-status');
+  aiStatus.hidden = homePage;
+  aiStatus.textContent = data.aiDisclosure?.length
+    ? 'This page says some content was made or changed with AI.'
+    : 'This page does not say its content was made with AI. That does not prove it was made by a person.';
   const scamStatus = document.querySelector('#scam-status');
   scamStatus.hidden = !scamFlags.length;
   scamStatus.textContent = `Scam check: possible ${scamFlags.join(', ')}. Do not enter passwords, codes, or payment details until you verify the site.`;
@@ -123,8 +134,8 @@ function render(data) {
   riskSummary.hidden = !riskLabels.length;
   riskSummary.textContent = `Flags: ${riskLabels.join(' · ')}`;
   const safetyMessage = document.querySelector('#safety-message');
-  safetyMessage.hidden = !risks.length;
-  safetyMessage.textContent = risks.length ? `Safety: ${risks.join(', ')} claim — verify before acting or sharing.` : '';
+  safetyMessage.hidden = homePage || !risks.length;
+  safetyMessage.textContent = risks.length ? `Safety: This page mentions ${risks.join(', ')}. Check carefully before you act or share.` : '';
   const preview = document.querySelector('#post-preview');
   preview.hidden = !data.social;
   if (data.social) {
