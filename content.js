@@ -38,6 +38,9 @@
     const title = youtubeTitle?.innerText || article.querySelector('h1')?.innerText || document.querySelector('h1')?.innerText || document.querySelector('meta[property="og:title"]')?.content || document.querySelector('meta[name="twitter:title"]')?.content || document.title;
     const description = article.querySelector('h2')?.innerText || document.querySelector('meta[property="og:description"]')?.content || document.querySelector('meta[name="description"]')?.content || '';
     const isOpinion = /\/opinion\//.test(location.pathname) || /\b(opinion|editorial)\b/i.test(`${document.querySelector('meta[property="og:type"]')?.content || ''} ${document.querySelector('article')?.className || ''}`);
+    const lead = [...article.querySelectorAll('p')]
+      .map(paragraph => paragraph.innerText.replace(/\s+/g, ' ').trim())
+      .find(paragraph => paragraph.length >= 80 && paragraph.length <= 900 && !/\b(subscribe|sign up|copyright|all rights reserved|listen to this article)\b/i.test(paragraph)) || '';
     const youtubeText = [youtubeTitle?.innerText, youtubeDescription?.innerText].filter(Boolean).join('\n\n');
     const text = (youtubeText || article?.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 30000);
     const captions = isYouTube ? getCaptionText(document.querySelector('video')) : '';
@@ -60,7 +63,7 @@
     const aiDisclosure = [...new Set(aiSources)].slice(0, 2);
     const author = document.querySelector('meta[name="author"], meta[property="article:author"], [rel="author"], .byline, [class*="byline"]')?.content || document.querySelector('[rel="author"], .byline, [class*="byline"]')?.textContent?.trim() || '';
     const date = document.querySelector('meta[property="article:published_time"], meta[name="date"], time[datetime]')?.content || document.querySelector('time[datetime]')?.dateTime || '';
-    return { title: title.trim(), description: description.trim(), isOpinion, text, captions, isYouTube, author, date, transparencyLinks, aiDisclosure, hasPasswordField, hasPaymentField, externalForm, protocol: location.protocol, externalLinks: outboundUrls.length, outboundUrls, url: location.href, hostname: location.hostname, social };
+    return { title: title.trim(), description: description.trim(), lead, isOpinion, text, captions, isYouTube, author, date, transparencyLinks, aiDisclosure, hasPasswordField, hasPaymentField, externalForm, protocol: location.protocol, externalLinks: outboundUrls.length, outboundUrls, url: location.href, hostname: location.hostname, social };
   }
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message.type === 'GET_ARTICLE_DATA') {
