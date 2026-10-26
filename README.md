@@ -1,6 +1,6 @@
 # TruthLens Chrome extension
 
-TruthLens provides *context* about a news article or social-media post's source and transparency signals. It uses “Looks credible” or “Needs verification” because publisher reputation alone cannot establish whether a specific claim is true.
+TruthLens provides *context* about a news article or social-media post's source and transparency signals. It uses “Looks credible,” “Limited confidence,” or “Unknown source” because publisher reputation alone cannot establish whether a specific claim is true.
 
 ## Install locally
 
