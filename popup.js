@@ -20,18 +20,35 @@ function looksLikeNonNews(data) {
   const text = `${data.title} ${data.text} ${data.captions || ''}`.toLowerCase();
   return /\b(music video|official music|lyrics?|song|cover song|gaming|gameplay|walkthrough|let'?s play|asmr|mukbang|recipe|cooking|makeup|beauty|unboxing|prank|comedy|funny|dance|workout|meditation|bedtime story|tutorial)\b/.test(text);
 }
+function estimateUnknownSource(data) {
+  let score = 25;
+  const clues = [];
+  if (data.author) { score += 15; clues.push('A named author or byline is visible.'); }
+  else clues.push('No clear author or byline was found.');
+  if (data.date) { score += 10; clues.push('A publication date is visible.'); }
+  else clues.push('No clear publication date was found.');
+  if (data.transparencyLinks >= 2) { score += 20; clues.push('The site links to multiple transparency or policy pages.'); }
+  else if (data.transparencyLinks) { score += 10; clues.push('The site links to at least one transparency or policy page.'); }
+  else clues.push('No visible corrections, standards, contact, or ownership links were found.');
+  if (data.externalLinks >= 3) { score += 15; clues.push('The article links to several outside sources.'); }
+  else if (data.externalLinks) { score += 7; clues.push('The article links to an outside source.'); }
+  else clues.push('The article has no visible external source links.');
+  if (data.text.length >= 800) { score += 8; clues.push('The page contains substantial readable article text.'); }
+  return { score: Math.min(score, 85), clues };
+}
 function render(data) {
   const source = sourceForHostname(data.hostname);
-  const score = source?.score ?? (data.social ? 30 : 50);
+  const estimate = source ? null : estimateUnknownSource(data);
+  const score = source?.score ?? (data.social ? 30 : estimate.score);
   const notNews = data.isYouTube && looksLikeNonNews(data);
   const credible = Boolean(source?.kind === 'newsroom' && score >= 70 && !data.social);
   document.querySelector('#publisher').textContent = source?.name ?? (data.social ? 'Social-media post' : 'Unlisted publisher');
   document.querySelector('#domain').textContent = data.hostname;
-  document.querySelector('#score').textContent = source ? `${score}/100` : 'Check';
+  document.querySelector('#score').textContent = source ? `${score}/100` : data.social ? 'Check' : `~${score}/100`;
   const verdict = document.querySelector('#verdict');
-  verdict.textContent = notNews ? 'Not news content' : credible ? 'Looks credible' : source ? 'Limited confidence' : 'Unknown source';
+  verdict.textContent = notNews ? 'Not news content' : credible ? 'Looks credible' : source ? 'Limited confidence' : score >= 65 ? 'Promising signals' : score >= 45 ? 'Limited confidence' : 'Little evidence found';
   verdict.classList.toggle('cautious', !credible);
-  document.querySelector('#rating').textContent = notNews ? 'This video appears to be entertainment, a tutorial, or another non-news format. That is not a judgment about its quality or accuracy.' : credible ? `${source.tier}. ${source.note}` : (data.social ? 'Social posts are not independently fact-checked by TruthLens. Look for the original source before sharing.' : source ? `${source.tier}. ${source.note}` : 'TruthLens has no source profile for this publisher. This is not proof that the claim is false.');
+  document.querySelector('#rating').textContent = notNews ? 'This video appears to be entertainment, a tutorial, or another non-news format. That is not a judgment about its quality or accuracy.' : credible ? `${source.tier}. ${source.note}` : (data.social ? 'Social posts are not independently fact-checked by TruthLens. Look for the original source before sharing.' : source ? `${source.tier}. ${source.note}` : `Provisional ${score}/100 estimate based on visible transparency signals. It is not a fact-check or an endorsement of the publisher.`);
   document.querySelector('#headline').textContent = data.title || 'This page';
   const preview = document.querySelector('#post-preview');
   preview.hidden = !data.social;
@@ -49,7 +66,8 @@ function render(data) {
       const p = document.createElement('p'); p.textContent = 'No external sources were linked in this visible post.'; p.className = 'no-links'; links.replaceChildren(p);
     }
   }
-  document.querySelector('#signals').replaceChildren(...makeSignals(data).map(s => { const li = document.createElement('li'); li.textContent = s; return li; }));
+  const signals = [...makeSignals(data), ...(estimate ? estimate.clues : [])];
+  document.querySelector('#signals').replaceChildren(...signals.map(s => { const li = document.createElement('li'); li.textContent = s; return li; }));
   document.querySelector('#why-button').onclick = () => {
     const panel = document.querySelector('#why-panel'); const open = panel.hidden;
     panel.hidden = !open;
