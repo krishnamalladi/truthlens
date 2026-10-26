@@ -75,15 +75,24 @@ function scamCheck(data, source) {
   const payment = /\b(gift card|wire transfer|crypto(?:currency)?|bitcoin|send money|guaranteed profit|double your money)\b/.test(text);
   const sensitive = /\b(one[- ]time code|verification code|security code|password|social security number)\b/.test(text);
   const lottery = /\b(you(?:'ve| have)? won|claim (?:your )?(?:prize|reward|lottery|jackpot)|lottery winner|unclaimed (?:prize|reward)|congratulations)\b/.test(text);
+  const fakeSecurityAlert = /\b(virus detected|device (?:is )?infected|computer (?:is )?locked|security alert|call (?:now|immediately).{0,30}(?:support|technician)|microsoft support|apple support)\b/.test(text);
+  const tooGoodToBeTrue = /\b(free (?:iphone|phone|gift card|laptop)|instant cash|risk[- ]free|guaranteed (?:income|loan|approval|returns?)|earn \$?\d+.{0,25}(?:day|week|month))\b/.test(text);
+  const advanceFee = /\b(processing fee|release fee|activation fee|clearance fee|pay (?:a |the )?(?:small )?fee|fee (?:to|for) (?:claim|release|receive))\b/.test(text);
+  const downloadPressure = /\b(download (?:this|the) (?:file|app|extension)|install (?:this|the) (?:app|extension)|enable (?:macros|notifications))\b/.test(text);
   if (urgent) flags.push('urgent-pressure language');
   if (payment) flags.push('high-risk payment language');
   if (sensitive) flags.push('sensitive-information request');
   if (lottery) flags.push('lottery or prize message');
+  if (fakeSecurityAlert) flags.push('fake security-alert language');
+  if (tooGoodToBeTrue) flags.push('too-good-to-be-true offer');
+  if (advanceFee) flags.push('advance-fee request');
+  if (downloadPressure) flags.push('pressure to download or install something');
   if (data.hasPasswordField && (urgent || sensitive)) flags.push('password form paired with a sensitive request');
   if (data.hasPaymentField && payment) flags.push('payment form paired with high-risk payment language');
   if (data.externalForm && (urgent || payment || sensitive)) flags.push('form submits to another site');
   if (data.protocol !== 'https:') flags.push('not using a secure connection');
   if (/xn--|(?:-|\.){3,}/i.test(data.hostname) || /\.(zip|top|click|country|gq)$/i.test(data.hostname)) flags.push('unusual domain pattern');
+  if (!data.transparencyLinks && (urgent || payment || sensitive || lottery || fakeSecurityAlert || tooGoodToBeTrue || advanceFee || downloadPressure)) flags.push('no clear contact or policy page');
   return [...new Set(flags)];
 }
 async function readActiveTab(tab) {
