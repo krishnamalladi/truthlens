@@ -44,7 +44,11 @@
     const outboundUrls = [...new Set(links.map(a => a.href).filter(href => {
       try { const url = new URL(href); return /^https?:$/.test(url.protocol) && url.hostname !== location.hostname; } catch { return false; }
     }))].slice(0, 5);
-    return { title: title.trim(), text, captions, isYouTube, externalLinks: outboundUrls.length, outboundUrls, url: location.href, hostname: location.hostname, social };
+    const allLinks = [...document.querySelectorAll('a[href]')];
+    const transparencyLinks = allLinks.filter(link => /\b(about|contact|editorial|standards|corrections?|ethics|privacy|masthead|ownership)\b/i.test(`${link.textContent} ${link.href}`)).length;
+    const author = document.querySelector('meta[name="author"], meta[property="article:author"], [rel="author"], .byline, [class*="byline"]')?.content || document.querySelector('[rel="author"], .byline, [class*="byline"]')?.textContent?.trim() || '';
+    const date = document.querySelector('meta[property="article:published_time"], meta[name="date"], time[datetime]')?.content || document.querySelector('time[datetime]')?.dateTime || '';
+    return { title: title.trim(), text, captions, isYouTube, author, date, transparencyLinks, externalLinks: outboundUrls.length, outboundUrls, url: location.href, hostname: location.hostname, social };
   }
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message.type === 'GET_ARTICLE_DATA') {
