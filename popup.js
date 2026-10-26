@@ -73,6 +73,9 @@ function render(data) {
   document.querySelector('#claim-status').textContent = data.externalLinks >= 2
     ? 'Verification: source links found — compare them with independent reporting.'
     : 'Verification: no clear independent evidence found on this page.';
+  document.querySelector('#ai-status').textContent = data.aiDisclosure?.length
+    ? `AI check: disclosure found — ${data.aiDisclosure[0].slice(0, 120)}`
+    : 'AI check: no disclosure found — this does not prove the media is human-made.';
   const safetyMessage = document.querySelector('#safety-message');
   safetyMessage.hidden = !risks.length;
   safetyMessage.textContent = risks.length ? `Safety: ${risks.join(', ')} claim — verify before acting or sharing.` : '';
