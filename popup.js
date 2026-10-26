@@ -49,11 +49,25 @@ function extractMainClaim(data) {
   const looksLikePageChrome = /\b(gift unlocked|listen \(|article\b|subscribe|sign in|minutes? read|\b\d{1,2}:\d{2}\s*(am|pm)\b)\b/i.test(title);
   const description = (data.description || '').replace(/\s+/g, ' ').trim();
   const lead = (data.lead || '').replace(/\s+/g, ' ').trim();
+  const plainOpinion = data.isOpinion ? plainOpinionClaim(title, lead) : '';
+  if (plainOpinion) return plainOpinion;
   if (lead.length >= 80) return `${data.isOpinion ? 'Opinion main point' : 'Main point'}: ${shortenLead(lead)}`;
   if (data.isOpinion && description.length >= 20 && description.length <= 220) return `Opinion: ${description}`;
   if (title.length >= 12 && title.length <= 180 && !looksLikePageChrome) return title;
   if (description.length >= 20 && description.length <= 220) return data.isOpinion ? `Opinion: ${description}` : description;
   return 'No clear headline found on this page.';
+}
+function plainOpinionClaim(title, lead) {
+  if (!title || !lead) return '';
+  const topic = title.split(/\s+(?:and|&|:|–|—)\s+/i)[0].trim();
+  if (topic.length < 4 || topic.length > 100) return '';
+  if (/\b(dishonest|bad idea|wrong|harmful|dangerous|fail(?:s|ed|ure)?|criticiz|oppose|against)\b/i.test(lead)) {
+    return `This opinion article argues against ${topic}.`;
+  }
+  if (/\b(good idea|benefit|helps?|supports?|success|effective|works?|in favor of)\b/i.test(lead)) {
+    return `This opinion article argues in favor of ${topic}.`;
+  }
+  return '';
 }
 function shortenLead(lead) {
   if (lead.length <= 280) return lead;
