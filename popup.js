@@ -29,7 +29,7 @@ function render(data) {
   document.querySelector('#domain').textContent = data.hostname;
   document.querySelector('#score').textContent = source ? `${score}/100` : 'Check';
   const verdict = document.querySelector('#verdict');
-  verdict.textContent = notNews ? 'Not news content' : credible ? 'Looks credible' : 'Needs verification';
+  verdict.textContent = notNews ? 'Not news content' : credible ? 'Looks credible' : source ? 'Limited confidence' : 'Unknown source';
   verdict.classList.toggle('cautious', !credible);
   document.querySelector('#rating').textContent = notNews ? 'This video appears to be entertainment, a tutorial, or another non-news format. That is not a judgment about its quality or accuracy.' : credible ? `${source.tier}. ${source.note}` : (data.social ? 'Social posts are not independently fact-checked by TruthLens. Look for the original source before sharing.' : source ? `${source.tier}. ${source.note}` : 'TruthLens has no source profile for this publisher. This is not proof that the claim is false.');
   document.querySelector('#headline').textContent = data.title || 'This page';
