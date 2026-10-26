@@ -64,6 +64,16 @@ function scamCheck(data) {
   if (/xn--|(?:-|\.){3,}/i.test(data.hostname) || /\.(zip|top|click|country|gq)$/i.test(data.hostname)) flags.push('unusual domain pattern');
   return [...new Set(flags)];
 }
+async function readActiveTab(tab) {
+  try {
+    return await chrome.tabs.sendMessage(tab.id, { type: 'GET_ARTICLE_DATA' });
+  } catch {
+    // The page may have been open before TruthLens was installed or reloaded.
+    // Inject only after the user opens the popup and has enabled page reading.
+    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content.js'] });
+    return chrome.tabs.sendMessage(tab.id, { type: 'GET_ARTICLE_DATA' });
+  }
+}
 function render(data) {
   const source = sourceForHostname(data.hostname);
   const estimate = source ? null : estimateUnknownSource(data);
@@ -138,8 +148,16 @@ async function init() {
     document.querySelector('#privacy-off').hidden = false;
     return;
   }
-  try { const [tab] = await chrome.tabs.query({ active: true, currentWindow: true }); const data = await chrome.tabs.sendMessage(tab.id, { type: 'GET_ARTICLE_DATA' }); if (!data || data.disabled) throw Error(); render(data); }
-  catch { document.querySelector('#loading').hidden = true; document.querySelector('#error').hidden = false; }
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const data = await readActiveTab(tab);
+    if (!data || data.disabled) throw Error();
+    render(data);
+  } catch {
+    document.querySelector('#loading').hidden = true;
+    document.querySelector('#error').hidden = false;
+    document.querySelector('#error p').textContent = 'TruthLens cannot read this page. Try a normal article or individual post; Chrome blocks browser settings, the Chrome Web Store, and some protected pages.';
+  }
 }
 document.querySelector('#enabled-toggle').addEventListener('change', async (event) => {
   await chrome.storage.local.set({ truthLensEnabled: event.target.checked });
