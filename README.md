@@ -1,6 +1,6 @@
 # TruthLens Chrome extension
 
-TruthLens provides *context* about a news article or social-media post's source and transparency signals. It uses “Looks credible,” “Limited confidence,” or “Unknown source” because publisher reputation alone cannot establish whether a specific claim is true.
+TruthLens provides *context* about a news article or social-media post's source and transparency signals. Its simple result is “Credible” or “Not credible”; the **Why?** panel shows the evidence behind that estimate.
 
 ## Install locally
 
@@ -15,7 +15,7 @@ TruthLens provides *context* about a news article or social-media post's source 
 - The local **TruthLens Source Registry** (`source-registry.js`) supplies source-context scores. It is owned by this extension; it does not rely on RumorGuard or another fact-checking service.
 - Registry entries are added only when a publisher has documented editorial standards, a corrections process, a professional reporting structure, and a pattern of source attribution. A score is never proof that an individual claim is true.
 - For an unlisted website, TruthLens creates a **provisional local estimate** from visible signals: byline, publication date, policy/contact links, external citations, and article length. This is not a fact-check and never turns an unknown publisher into a fully verified source.
-- **Safety Mode** extracts a likely main claim, warns when it detects health, money, election, or urgent-action language, and lets the user copy the claim to paste into a search engine, fact-checking site, or message to a trusted person. It does not send page content to any third party.
+- The compact claims strip extracts a likely main claim, shows whether the page includes source links, and displays a safety warning only for health, money, election, or urgent-action language. It does not send page content to any third party.
 - Platforms, portals, and community-edited references are classified separately. They can be useful starting points, but they do not receive a “Looks credible” result based solely on the host domain.
 - The extension scans only the active page, including common social-media pages, for non-sensitive signals such as external links, attribution language, and update/correction notices.
 - For social posts, choose **Why?** to see the visible post text TruthLens extracted and open any external links attached to that post.
