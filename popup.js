@@ -37,10 +37,10 @@ function estimateUnknownSource(data) {
   return { score: Math.min(score, 85), clues };
 }
 function extractMainClaim(data) {
-  const title = (data.title || '').replace(/\s*[|–—-]\s*[^|–—-]+$/, '').trim();
-  if (title && title.length > 20) return title.slice(0, 220);
-  const sentence = (data.text || '').match(/[^.!?]{30,220}[.!?]/)?.[0];
-  return sentence?.trim() || 'TruthLens could not isolate a main claim on this page.';
+  const title = (data.title || '').replace(/\s+/g, ' ').replace(/\s*[|–—]\s*[^|–—]+$/, '').trim();
+  const looksLikePageChrome = /\b(gift unlocked|listen \(|article\b|subscribe|sign in|minutes? read|\b\d{1,2}:\d{2}\s*(am|pm)\b)\b/i.test(title);
+  if (title.length >= 12 && title.length <= 180 && !looksLikePageChrome) return title;
+  return 'No clear headline found on this page.';
 }
 function safetyCheck(data) {
   const text = `${data.title} ${data.text} ${data.captions || ''}`.toLowerCase();
