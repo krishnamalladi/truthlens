@@ -18,6 +18,7 @@ TruthLens provides *context* about a news article or social-media post's source 
 - The compact claims strip extracts a likely main claim, shows whether the page includes source links, and displays a safety warning only for health, money, election, or urgent-action language. It does not send page content to any third party.
 - The AI disclosure check looks for explicit AI-generated, synthetic-media, or altered-media labels in metadata, image descriptions, captions, and video labels. A missing disclosure is not proof that content is human-made.
 - The scam check warns about visible scam-risk signals such as urgent pressure, high-risk payment language, requests for passwords or codes, unusual domain patterns, insecure connections, and external form submissions. It cannot prove a website is safe or fraudulent.
+- When more than one concern is found, the compact **Flags** line lists each one together: possible scam signs, an AI/altered-media disclosure, and misinformation risk.
 - Platforms, portals, and community-edited references are classified separately. They can be useful starting points, but they do not receive a “Looks credible” result based solely on the host domain.
 - The extension scans only the active page, including common social-media pages, for non-sensitive signals such as external links, attribution language, and update/correction notices.
 - For social posts, choose **Why?** to see the visible post text TruthLens extracted and open any external links attached to that post.
