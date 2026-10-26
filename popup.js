@@ -47,7 +47,10 @@ function extractMainClaim(data) {
   } catch { /* Keep the normal headline check when a page URL is unavailable. */ }
   const title = (data.title || '').replace(/\s+/g, ' ').replace(/\s*[|–—]\s*[^|–—]+$/, '').trim();
   const looksLikePageChrome = /\b(gift unlocked|listen \(|article\b|subscribe|sign in|minutes? read|\b\d{1,2}:\d{2}\s*(am|pm)\b)\b/i.test(title);
+  const description = (data.description || '').replace(/\s+/g, ' ').trim();
+  if (data.isOpinion && description.length >= 20 && description.length <= 220) return `Opinion: ${description}`;
   if (title.length >= 12 && title.length <= 180 && !looksLikePageChrome) return title;
+  if (description.length >= 20 && description.length <= 220) return data.isOpinion ? `Opinion: ${description}` : description;
   return 'No clear headline found on this page.';
 }
 function isHomePage(data) {
@@ -71,9 +74,11 @@ function scamCheck(data, source) {
   const urgent = /\b(act now|urgent|immediately|limited time|final warning|account.*(?:suspend|lock)|verify.*account)\b/.test(text);
   const payment = /\b(gift card|wire transfer|crypto(?:currency)?|bitcoin|send money|guaranteed profit|double your money)\b/.test(text);
   const sensitive = /\b(one[- ]time code|verification code|security code|password|social security number)\b/.test(text);
+  const lottery = /\b(you(?:'ve| have)? won|claim (?:your )?(?:prize|reward|lottery|jackpot)|lottery winner|unclaimed (?:prize|reward)|congratulations)\b/.test(text);
   if (urgent) flags.push('urgent-pressure language');
   if (payment) flags.push('high-risk payment language');
   if (sensitive) flags.push('sensitive-information request');
+  if (lottery) flags.push('lottery or prize message');
   if (data.hasPasswordField && (urgent || sensitive)) flags.push('password form paired with a sensitive request');
   if (data.hasPaymentField && payment) flags.push('payment form paired with high-risk payment language');
   if (data.externalForm && (urgent || payment || sensitive)) flags.push('form submits to another site');
