@@ -48,10 +48,18 @@ function extractMainClaim(data) {
   const title = (data.title || '').replace(/\s+/g, ' ').replace(/\s*[|–—]\s*[^|–—]+$/, '').trim();
   const looksLikePageChrome = /\b(gift unlocked|listen \(|article\b|subscribe|sign in|minutes? read|\b\d{1,2}:\d{2}\s*(am|pm)\b)\b/i.test(title);
   const description = (data.description || '').replace(/\s+/g, ' ').trim();
+  const lead = (data.lead || '').replace(/\s+/g, ' ').trim();
+  if (lead.length >= 80) return `${data.isOpinion ? 'Opinion main point' : 'Main point'}: ${shortenLead(lead)}`;
   if (data.isOpinion && description.length >= 20 && description.length <= 220) return `Opinion: ${description}`;
   if (title.length >= 12 && title.length <= 180 && !looksLikePageChrome) return title;
   if (description.length >= 20 && description.length <= 220) return data.isOpinion ? `Opinion: ${description}` : description;
   return 'No clear headline found on this page.';
+}
+function shortenLead(lead) {
+  if (lead.length <= 280) return lead;
+  const start = lead.slice(0, 280);
+  const sentenceEnd = Math.max(start.lastIndexOf('. '), start.lastIndexOf('! '), start.lastIndexOf('? '));
+  return sentenceEnd >= 80 ? start.slice(0, sentenceEnd + 1) : `${start.slice(0, 277).trim()}...`;
 }
 function isHomePage(data) {
   try { return new URL(data.url).pathname === '/'; } catch { return false; }
