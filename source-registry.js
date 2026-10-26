@@ -34,3 +34,33 @@ const TRUTHLENS_REGISTRY = {
   'facebook.com': { name: 'Facebook posts', score: 30, kind: 'platform', tier: 'User-posted platform', note: 'Posts can be published without editorial review. Check the original source and independent reporting.' },
   'headtopics.com': { name: 'Head Topics', score: 40, kind: 'portal', tier: 'News aggregation platform', note: 'Aggregates headlines and stories. Open the original publisher and verify primary reporting.' }
 };
+
+// AhrefsTop's worldwide top-100 list is based on estimated search traffic.
+// These domains are recognized, but traffic is not evidence of reliability.
+for (const domain of [
+  'globo.com', 'bbc.co.uk', 'uol.com.br', 'sambad.com', 'interia.pl', 'msn.com',
+  'detik.com', 'hurriyet.com.tr', 'kompas.com', 'conectate.com.do', 'wp.pl', 'bild.de',
+  'ctvnews.ca', 'ouest-france.fr', 'baomoi.com', 'milliyet.com.tr', 'kapook.com',
+  'tribunnews.com', 'vnexpress.net', 'indiatoday.in', 'hindustantimes.com', 'infobae.com',
+  'corriere.it', 'halktv.com.tr', 'ndtv.com', 'lefigaro.fr', 'sabah.com.tr', 'baoquocte.vn',
+  '24h.com.vn', 'sozcu.com.tr', 'n-tv.de', 'terra.com.br', 'news18.com', 'sondakika.com',
+  't-online.de', 'tvn24.pl', 'timesnownews.com', 'thairath.co.th', 'vietnamnet.vn', 'elpais.com',
+  'iltalehti.fi', 'thesun.co.uk', 'spiegel.de', 'abplive.com', 'repubblica.it', 'franceinfo.fr',
+  'bhaskar.com', 'kumparan.com', 'ynet.co.il', 'aol.com', 'indianexpress.com', 'cnnbrasil.com.br',
+  'aajtak.in', 'bfmtv.com', 'aljazeera.com', 'ukr.net', 'protothema.gr', 'liputan6.com',
+  'tagesschau.de', 'asahi.com', 'thehindu.com', 'youm7.com', 'elmundo.es', 'thanhnien.vn',
+  'expressen.se', 'aftonbladet.se', 'lavanguardia.com', 'haber7.com', 'ad.nl', 'abril.com.br',
+  'haberturk.com', 'lanacion.com.ar', 'cnnturk.com', 'udn.com', 'welt.de', 'tuoitre.vn',
+  'express.co.uk', 'is.fi', 'abc.net.au', 'estadao.com.br', 'hln.be', 'ndr.de', 'vg.no',
+  'ntv.com.tr', 'nu.nl', 'livehindustan.com', 'clarin.com', 'lemonde.fr'
+]) {
+  if (!TRUTHLENS_REGISTRY[domain]) {
+    TRUTHLENS_REGISTRY[domain] = {
+      name: domain,
+      score: 60,
+      kind: 'newsroom',
+      tier: 'International news source — limited confidence',
+      note: 'Listed by AhrefsTop for search traffic. Traffic is not evidence of accuracy; verify important claims with primary sources and independent reporting.'
+    };
+  }
+}
