@@ -36,20 +36,48 @@ function estimateUnknownSource(data) {
   if (data.text.length >= 800) { score += 8; clues.push('The page contains substantial readable article text.'); }
   return { score: Math.min(score, 85), clues };
 }
+function extractMainClaim(data) {
+  const title = (data.title || '').replace(/\s*[|–—-]\s*[^|–—-]+$/, '').trim();
+  if (title && title.length > 20) return title.slice(0, 220);
+  const sentence = (data.text || '').match(/[^.!?]{30,220}[.!?]/)?.[0];
+  return sentence?.trim() || 'TruthLens could not isolate a main claim on this page.';
+}
+function safetyCheck(data) {
+  const text = `${data.title} ${data.text} ${data.captions || ''}`.toLowerCase();
+  const categories = [];
+  if (/\b(cure|treatment|vaccine|cancer|doctor|medical|health|symptom|disease)\b/.test(text)) categories.push('health');
+  if (/\b(investment|crypto|bitcoin|bank|loan|wire transfer|giveaway|prize|refund|money)\b/.test(text)) categories.push('money');
+  if (/\b(election|vote|ballot|polling place|fraud)\b/.test(text)) categories.push('elections');
+  if (/\b(urgent|immediately|share this|breaking|emergency|disaster|evacuate)\b/.test(text)) categories.push('urgent claim');
+  return [...new Set(categories)];
+}
 function render(data) {
   const source = sourceForHostname(data.hostname);
   const estimate = source ? null : estimateUnknownSource(data);
   const score = source?.score ?? (data.social ? 30 : estimate.score);
   const notNews = data.isYouTube && looksLikeNonNews(data);
   const credible = Boolean(source?.kind === 'newsroom' && score >= 70 && !data.social);
+  const claim = extractMainClaim(data);
+  const risks = safetyCheck(data);
   document.querySelector('#publisher').textContent = source?.name ?? (data.social ? 'Social-media post' : 'Unlisted publisher');
   document.querySelector('#domain').textContent = data.hostname;
   document.querySelector('#score').textContent = source ? `${score}/100` : data.social ? 'Check' : `~${score}/100`;
   const verdict = document.querySelector('#verdict');
-  verdict.textContent = notNews ? 'Not news content' : credible ? 'Looks credible' : source ? 'Limited confidence' : score >= 65 ? 'Promising signals' : score >= 45 ? 'Limited confidence' : 'Little evidence found';
+  verdict.textContent = notNews ? 'Not news content' : risks.length ? 'High-stakes: verify' : credible ? 'Looks credible' : source ? 'Limited confidence' : score >= 65 ? 'Promising signals' : score >= 45 ? 'Limited confidence' : 'Little evidence found';
   verdict.classList.toggle('cautious', !credible);
   document.querySelector('#rating').textContent = notNews ? 'This video appears to be entertainment, a tutorial, or another non-news format. That is not a judgment about its quality or accuracy.' : credible ? `${source.tier}. ${source.note}` : (data.social ? 'Social posts are not independently fact-checked by TruthLens. Look for the original source before sharing.' : source ? `${source.tier}. ${source.note}` : `Provisional ${score}/100 estimate based on visible transparency signals. It is not a fact-check or an endorsement of the publisher.`);
   document.querySelector('#headline').textContent = data.title || 'This page';
+  const safetyCard = document.querySelector('#safety-card');
+  safetyCard.hidden = false;
+  document.querySelector('#main-claim').textContent = `Main claim: ${claim}`;
+  document.querySelector('#safety-message').textContent = risks.length
+    ? `This may involve ${risks.join(', ')}. Pause before sharing or acting; check primary and independent sources.`
+    : 'Compare this claim with reporting from independent sources before sharing.';
+  document.querySelector('#research-button').onclick = async (event) => {
+    await navigator.clipboard.writeText(claim);
+    event.currentTarget.textContent = 'Claim copied';
+    setTimeout(() => { event.currentTarget.textContent = 'Copy main claim'; }, 1800);
+  };
   const preview = document.querySelector('#post-preview');
   preview.hidden = !data.social;
   if (data.social) {
