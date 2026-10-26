@@ -73,6 +73,23 @@ function safetyCheck(data) {
   if (/\b(urgent|immediately|share this|breaking|emergency|disaster|evacuate)\b/.test(text)) categories.push('urgent claim');
   return [...new Set(categories)];
 }
+function aiCheck(data) {
+  const text = `${data.title} ${data.text}`.replace(/\s+/g, ' ').trim();
+  const lower = text.toLowerCase();
+  const clues = [];
+  const hasDisclosure = Boolean(data.aiDisclosure?.length);
+  if (hasDisclosure) clues.push('The page labels some content as made or changed with AI.');
+  if (/(?:^|[.!?]\s+)(?:as an ai language model|i am an ai language model|i cannot browse the internet|i don’t have access to real-time)/i.test(text)) {
+    clues.push('The writing includes a phrase commonly left behind by an AI tool.');
+  }
+  const sentences = lower.split(/[.!?]+/).map(sentence => sentence.replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim()).filter(sentence => sentence.length >= 70);
+  const repeatedSentence = sentences.some((sentence, index) => sentences.indexOf(sentence) !== index);
+  if (repeatedSentence) clues.push('The page repeats a long sentence.');
+  if (!data.author && !data.date && !data.externalLinks && !data.transparencyLinks) {
+    clues.push('No author, publication date, source links, or contact information were found.');
+  }
+  return { flagged: hasDisclosure || clues.length >= 2, hasDisclosure, clues };
+}
 function scamCheck(data, source) {
   // A known newsroom can legitimately include account, subscription, and payment forms.
   // This page-level heuristic is not designed to inspect advertising or account flows.
@@ -122,6 +139,7 @@ function render(data) {
   const claim = extractMainClaim(data);
   const homePage = isHomePage(data);
   const risks = safetyCheck(data);
+  const aiAssessment = aiCheck(data);
   const scamFlags = scamCheck(data, source);
   document.querySelector('#publisher').textContent = source?.name ?? (data.social ? 'Social-media post' : 'Unlisted publisher');
   document.querySelector('#domain').textContent = data.hostname;
@@ -143,16 +161,16 @@ function render(data) {
       ? 'This page links to other sources. Open Why to review them.'
       : 'This page does not clearly link to other sources.';
   const aiStatus = document.querySelector('#ai-status');
-  aiStatus.hidden = homePage || !data.aiDisclosure?.length;
-  aiStatus.textContent = data.aiDisclosure?.length
-    ? 'This page says some content was made or changed with AI.'
-    : '';
+  aiStatus.hidden = homePage || !aiAssessment.flagged;
+  aiStatus.textContent = aiAssessment.hasDisclosure
+    ? 'AI-made content label found. Open Why for details.'
+    : 'Possible AI-made content. Open Why for details.';
   const scamStatus = document.querySelector('#scam-status');
   scamStatus.hidden = !scamFlags.length;
   scamStatus.textContent = `Scam check: possible ${scamFlags.join(', ')}. Do not enter passwords, codes, or payment details until you verify the site.`;
   const riskLabels = [];
   if (scamFlags.length) riskLabels.push('possible scam signs');
-  if (data.aiDisclosure?.length) riskLabels.push('AI or altered-media disclosure');
+  if (aiAssessment.flagged) riskLabels.push('possible AI-made content');
   if (!credible && !notNews) riskLabels.push('misinformation risk');
   const riskSummary = document.querySelector('#risk-summary');
   riskSummary.hidden = !riskLabels.length;
@@ -176,7 +194,7 @@ function render(data) {
       const p = document.createElement('p'); p.textContent = 'No external sources were linked in this visible post.'; p.className = 'no-links'; links.replaceChildren(p);
     }
   }
-  const signals = [...makeSignals(data), ...(estimate ? estimate.clues : [])];
+  const signals = [...makeSignals(data), ...(estimate ? estimate.clues : []), ...(aiAssessment.flagged ? aiAssessment.clues : [])];
   document.querySelector('#signals').replaceChildren(...signals.map(s => { const li = document.createElement('li'); li.textContent = s; return li; }));
   document.querySelector('#why-button').onclick = () => {
     const panel = document.querySelector('#why-panel'); const open = panel.hidden;
