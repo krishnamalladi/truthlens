@@ -27,11 +27,10 @@
         <div id="verdict" class="verdict">Checking…</div>
         <p id="rating" class="rating"></p>
         <div class="source-row"><div><strong id="publisher">Publisher</strong><span id="domain"></span></div><div class="score" id="score">—</div></div>
-        <section id="safety-card" class="safety-card" hidden>
-          <p class="eyebrow">SAFETY CHECK</p>
-          <p id="main-claim" class="main-claim"></p>
-          <p id="safety-message" class="safety-message"></p>
-          <button id="research-button" class="research-button" type="button">Copy claim to clipboard</button>
+        <section id="claims-strip" class="claims-strip" hidden>
+          <p><strong>Claim:</strong> <span id="main-claim"></span></p>
+          <p id="claim-status"></p>
+          <p id="safety-message" hidden></p>
         </section>
         <button id="why-button" class="why-button" type="button" aria-expanded="false">Why?</button>
         <div id="why-panel" class="article-card" hidden>
