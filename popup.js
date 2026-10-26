@@ -51,6 +51,22 @@ function safetyCheck(data) {
   if (/\b(urgent|immediately|share this|breaking|emergency|disaster|evacuate)\b/.test(text)) categories.push('urgent claim');
   return [...new Set(categories)];
 }
+async function copyClaimToClipboard(claim) {
+  try {
+    await navigator.clipboard.writeText(claim);
+    return true;
+  } catch {
+    const fallback = document.createElement('textarea');
+    fallback.value = claim;
+    fallback.setAttribute('readonly', '');
+    fallback.style.cssText = 'position:fixed;left:-9999px;top:-9999px;';
+    document.body.append(fallback);
+    fallback.select();
+    const copied = document.execCommand('copy');
+    fallback.remove();
+    return copied;
+  }
+}
 function render(data) {
   const source = sourceForHostname(data.hostname);
   const estimate = source ? null : estimateUnknownSource(data);
@@ -71,12 +87,12 @@ function render(data) {
   safetyCard.hidden = false;
   document.querySelector('#main-claim').textContent = `Main claim: ${claim}`;
   document.querySelector('#safety-message').textContent = risks.length
-    ? `This may involve ${risks.join(', ')}. Pause before sharing or acting; check primary and independent sources.`
-    : 'Compare this claim with reporting from independent sources before sharing.';
+    ? `This may involve ${risks.join(', ')}. Pause before sharing or acting; copy the claim and check primary and independent sources.`
+    : 'Copy the claim, then paste it into a search engine, fact-checking site, or message to a trusted person before sharing.';
   document.querySelector('#research-button').onclick = async (event) => {
-    await navigator.clipboard.writeText(claim);
-    event.currentTarget.textContent = 'Claim copied';
-    setTimeout(() => { event.currentTarget.textContent = 'Copy main claim'; }, 1800);
+    const copied = await copyClaimToClipboard(claim);
+    event.currentTarget.textContent = copied ? 'Copied — paste it to research' : 'Could not copy — select the claim above';
+    setTimeout(() => { event.currentTarget.textContent = 'Copy claim to clipboard'; }, 2600);
   };
   const preview = document.querySelector('#post-preview');
   preview.hidden = !data.social;
