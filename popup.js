@@ -87,9 +87,10 @@ function render(data) {
   document.querySelector('#domain').textContent = data.hostname;
   document.querySelector('#score').textContent = source ? `${score}/100` : data.social ? 'Check' : `~${score}/100`;
   const verdict = document.querySelector('#verdict');
-  verdict.textContent = scamFlags.length >= 2 ? 'Not credible' : notNews ? 'Not news' : credible ? 'Credible' : 'Not credible';
-  verdict.classList.toggle('cautious', !credible);
-  document.querySelector('#rating').textContent = notNews ? 'This video appears to be entertainment, a tutorial, or another non-news format. That is not a judgment about its quality or accuracy.' : credible ? `${source.tier}. ${source.note}` : (data.social ? 'Social posts are not independently fact-checked by TruthLens. Look for the original source before sharing.' : source ? `${source.tier}. ${source.note}` : `Provisional ${score}/100 estimate based on visible transparency signals. It is not a fact-check or an endorsement of the publisher.`);
+  const isNotCredible = scamFlags.length >= 2 || !credible;
+  verdict.textContent = notNews ? 'Not news' : isNotCredible ? 'Not credible' : 'Credible';
+  verdict.classList.toggle('cautious', isNotCredible);
+  document.querySelector('#rating').textContent = notNews ? 'This video appears to be entertainment, a tutorial, or another non-news format. That is not a judgment about its quality or accuracy.' : credible && source ? `${source.tier}. ${source.note}` : (data.social ? 'Social posts are not independently fact-checked by TruthLens. Look for the original source before sharing.' : source ? `${source.tier}. ${source.note}` : `Provisional ${score}/100 estimate based on visible transparency signals. It is not a fact-check or an endorsement of the publisher.`);
   document.querySelector('#headline').textContent = data.title || 'This page';
   const claimsStrip = document.querySelector('#claims-strip');
   claimsStrip.hidden = false;
