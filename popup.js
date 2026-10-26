@@ -115,14 +115,16 @@ function render(data) {
   document.querySelector('#main-claim').textContent = claim;
   const claimStatus = document.querySelector('#claim-status');
   claimStatus.hidden = homePage;
-  claimStatus.textContent = data.externalLinks >= 2
-    ? 'We found links to other sources. You can review them under Why.'
-    : 'We did not find clear links to other sources on this page.';
+  claimStatus.textContent = credible && source
+    ? '✓ This is a known news website. We did not find basic scam signs.'
+    : data.externalLinks >= 2
+      ? 'This page links to other sources. Open Why to review them.'
+      : 'This page does not clearly link to other sources.';
   const aiStatus = document.querySelector('#ai-status');
-  aiStatus.hidden = homePage;
+  aiStatus.hidden = homePage || !data.aiDisclosure?.length;
   aiStatus.textContent = data.aiDisclosure?.length
     ? 'This page says some content was made or changed with AI.'
-    : 'This page does not say its content was made with AI. That does not prove it was made by a person.';
+    : '';
   const scamStatus = document.querySelector('#scam-status');
   scamStatus.hidden = !scamFlags.length;
   scamStatus.textContent = `Scam check: possible ${scamFlags.join(', ')}. Do not enter passwords, codes, or payment details until you verify the site.`;
