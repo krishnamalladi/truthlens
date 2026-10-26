@@ -4,6 +4,11 @@ function sourceForHostname(hostname) {
     .find(domain => host === domain || host.endsWith(`.${domain}`));
   return key ? TRUTHLENS_REGISTRY[key] : null;
 }
+function isEstablishedNewsroom(source) {
+  // Older registry entries identify established newsrooms by their curated score,
+  // while newer entries may include an explicit kind field.
+  return Boolean(source && (source.kind === 'newsroom' || source.score >= 70));
+}
 function makeSignals(data) {
   const text = data.text.toLowerCase(); const signals = [];
   if (data.social) signals.push('This is a social-media page. Posts can spread before independent verification.');
@@ -51,15 +56,21 @@ function safetyCheck(data) {
   if (/\b(urgent|immediately|share this|breaking|emergency|disaster|evacuate)\b/.test(text)) categories.push('urgent claim');
   return [...new Set(categories)];
 }
-function scamCheck(data) {
+function scamCheck(data, source) {
+  // A known newsroom can legitimately include account, subscription, and payment forms.
+  // This page-level heuristic is not designed to inspect advertising or account flows.
+  if (isEstablishedNewsroom(source)) return [];
   const text = `${data.title} ${data.text}`.toLowerCase();
   const flags = [];
-  if (/\b(act now|urgent|immediately|limited time|final warning|account.*(?:suspend|lock)|verify.*account)\b/.test(text)) flags.push('urgent-pressure language');
-  if (/\b(gift card|wire transfer|crypto(?:currency)?|bitcoin|send money|guaranteed profit|double your money)\b/.test(text)) flags.push('high-risk payment language');
-  if (/\b(one[- ]time code|verification code|security code|password|social security number)\b/.test(text)) flags.push('sensitive-information request');
-  if (data.hasPasswordField) flags.push('password form');
-  if (data.hasPaymentField) flags.push('payment form');
-  if (data.externalForm) flags.push('form submits to another site');
+  const urgent = /\b(act now|urgent|immediately|limited time|final warning|account.*(?:suspend|lock)|verify.*account)\b/.test(text);
+  const payment = /\b(gift card|wire transfer|crypto(?:currency)?|bitcoin|send money|guaranteed profit|double your money)\b/.test(text);
+  const sensitive = /\b(one[- ]time code|verification code|security code|password|social security number)\b/.test(text);
+  if (urgent) flags.push('urgent-pressure language');
+  if (payment) flags.push('high-risk payment language');
+  if (sensitive) flags.push('sensitive-information request');
+  if (data.hasPasswordField && (urgent || sensitive)) flags.push('password form paired with a sensitive request');
+  if (data.hasPaymentField && payment) flags.push('payment form paired with high-risk payment language');
+  if (data.externalForm && (urgent || payment || sensitive)) flags.push('form submits to another site');
   if (data.protocol !== 'https:') flags.push('not using a secure connection');
   if (/xn--|(?:-|\.){3,}/i.test(data.hostname) || /\.(zip|top|click|country|gq)$/i.test(data.hostname)) flags.push('unusual domain pattern');
   return [...new Set(flags)];
@@ -79,10 +90,10 @@ function render(data) {
   const estimate = source ? null : estimateUnknownSource(data);
   const score = source?.score ?? (data.social ? 30 : estimate.score);
   const notNews = data.isYouTube && looksLikeNonNews(data);
-  const credible = !data.social && (source ? source.kind === 'newsroom' && score >= 70 : score >= 65);
+  const credible = !data.social && (source ? isEstablishedNewsroom(source) : score >= 65);
   const claim = extractMainClaim(data);
   const risks = safetyCheck(data);
-  const scamFlags = scamCheck(data);
+  const scamFlags = scamCheck(data, source);
   document.querySelector('#publisher').textContent = source?.name ?? (data.social ? 'Social-media post' : 'Unlisted publisher');
   document.querySelector('#domain').textContent = data.hostname;
   document.querySelector('#score').textContent = source ? `${score}/100` : data.social ? 'Check' : `~${score}/100`;
