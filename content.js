@@ -35,7 +35,9 @@
       ? (youtubeDescription || youtubeTitle || document.querySelector('ytd-watch-metadata, ytd-reel-player-overlay-renderer'))
       : social && document.querySelector('[data-testid="tweetText"], [data-ad-preview="message"], [role="article"], [data-e2e="browse-video-desc"], [data-e2e="video-desc"]');
     const article = post || document.querySelector('article') || document.querySelector('[role="main"]') || document.body;
-    const title = youtubeTitle?.innerText || document.querySelector('meta[property="og:title"]')?.content || document.querySelector('meta[name="twitter:title"]')?.content || article.querySelector('h1')?.innerText || document.querySelector('h1')?.innerText || document.title;
+    const title = youtubeTitle?.innerText || article.querySelector('h1')?.innerText || document.querySelector('h1')?.innerText || document.querySelector('meta[property="og:title"]')?.content || document.querySelector('meta[name="twitter:title"]')?.content || document.title;
+    const description = article.querySelector('h2')?.innerText || document.querySelector('meta[property="og:description"]')?.content || document.querySelector('meta[name="description"]')?.content || '';
+    const isOpinion = /\/opinion\//.test(location.pathname) || /\b(opinion|editorial)\b/i.test(`${document.querySelector('meta[property="og:type"]')?.content || ''} ${document.querySelector('article')?.className || ''}`);
     const youtubeText = [youtubeTitle?.innerText, youtubeDescription?.innerText].filter(Boolean).join('\n\n');
     const text = (youtubeText || article?.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 30000);
     const captions = isYouTube ? getCaptionText(document.querySelector('video')) : '';
@@ -58,7 +60,7 @@
     const aiDisclosure = [...new Set(aiSources)].slice(0, 2);
     const author = document.querySelector('meta[name="author"], meta[property="article:author"], [rel="author"], .byline, [class*="byline"]')?.content || document.querySelector('[rel="author"], .byline, [class*="byline"]')?.textContent?.trim() || '';
     const date = document.querySelector('meta[property="article:published_time"], meta[name="date"], time[datetime]')?.content || document.querySelector('time[datetime]')?.dateTime || '';
-    return { title: title.trim(), text, captions, isYouTube, author, date, transparencyLinks, aiDisclosure, hasPasswordField, hasPaymentField, externalForm, protocol: location.protocol, externalLinks: outboundUrls.length, outboundUrls, url: location.href, hostname: location.hostname, social };
+    return { title: title.trim(), description: description.trim(), isOpinion, text, captions, isYouTube, author, date, transparencyLinks, aiDisclosure, hasPasswordField, hasPaymentField, externalForm, protocol: location.protocol, externalLinks: outboundUrls.length, outboundUrls, url: location.href, hostname: location.hostname, social };
   }
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message.type === 'GET_ARTICLE_DATA') {
