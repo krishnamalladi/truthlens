@@ -2,7 +2,11 @@ function sourceForHostname(hostname) {
   const host = hostname.toLowerCase().replace(/^www\./, '');
   const key = Object.keys(TRUTHLENS_REGISTRY).sort((a, b) => b.length - a.length)
     .find(domain => host === domain || host.endsWith(`.${domain}`));
-  return key ? TRUTHLENS_REGISTRY[key] : null;
+  if (key) return TRUTHLENS_REGISTRY[key];
+  if (host === 'gov' || host.endsWith('.gov')) {
+    return { name: 'U.S. government website', score: 92, tier: 'Official U.S. government source', note: 'Official U.S. government domain.' };
+  }
+  return null;
 }
 function isEstablishedNewsroom(source) {
   // Older registry entries identify established newsrooms by their curated score,
@@ -170,7 +174,9 @@ function render(data) {
   const claimStatus = document.querySelector('#claim-status');
   claimStatus.hidden = homePage;
   claimStatus.textContent = credible && source
-    ? '✓ This is a known news website. We did not find basic scam signs.'
+    ? source.tier === 'Official U.S. government source'
+      ? '✓ This is an official U.S. government website. We did not find basic scam signs.'
+      : '✓ This is a known news website. We did not find basic scam signs.'
     : data.externalLinks >= 2
       ? 'This page links to other sources. Open Why to review them.'
       : 'This page does not clearly link to other sources.';
@@ -191,7 +197,11 @@ function render(data) {
   riskSummary.textContent = `Flags: ${riskLabels.join(' · ')}`;
   const safetyMessage = document.querySelector('#safety-message');
   safetyMessage.hidden = homePage || !risks.length;
-  safetyMessage.textContent = risks.length ? `Safety: This page mentions ${risks.join(', ')}. Check carefully before you act or share.` : '';
+  safetyMessage.textContent = risks.length
+    ? credible && source
+      ? `Topics: This page discusses ${risks.join(', ')}.`
+      : `Safety: This page mentions ${risks.join(', ')}. Check carefully before you act or share.`
+    : '';
   const preview = document.querySelector('#post-preview');
   preview.hidden = !data.social;
   if (data.social) {
