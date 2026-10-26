@@ -93,6 +93,13 @@ function render(data) {
   const scamStatus = document.querySelector('#scam-status');
   scamStatus.hidden = !scamFlags.length;
   scamStatus.textContent = `Scam check: possible ${scamFlags.join(', ')}. Do not enter passwords, codes, or payment details until you verify the site.`;
+  const riskLabels = [];
+  if (scamFlags.length) riskLabels.push('possible scam signs');
+  if (data.aiDisclosure?.length) riskLabels.push('AI or altered-media disclosure');
+  if (!credible && !notNews) riskLabels.push('misinformation risk');
+  const riskSummary = document.querySelector('#risk-summary');
+  riskSummary.hidden = !riskLabels.length;
+  riskSummary.textContent = `Flags: ${riskLabels.join(' · ')}`;
   const safetyMessage = document.querySelector('#safety-message');
   safetyMessage.hidden = !risks.length;
   safetyMessage.textContent = risks.length ? `Safety: ${risks.join(', ')} claim — verify before acting or sharing.` : '';
